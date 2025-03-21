@@ -2,6 +2,7 @@ import express from 'express';
 import { Request, Response} from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import Expense from './model/expenseSchema';
 
 dotenv.config();
 
@@ -26,19 +27,6 @@ mongoose.connect(MONGO_URL, clientOptions)
         {console.log("Connection error: ", err)
     });
 
-interface ExpenseObject {
-    description: string;
-    amount: string;
-    category: string;
-}
-
-const expenseSchema = new mongoose.Schema<ExpenseObject>({
-    description: { type: String, required: true },
-    amount: { type: String, required: true },
-    category: { type: String, required: true }
-});
-
-const Expense = mongoose.model<ExpenseObject>("Expense", expenseSchema);
 
 app.use(express.json());
 
