@@ -1,14 +1,29 @@
 import express from 'express';
 import { Request, Response} from 'express';
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 
-mongoose.connect("mongodb://localhost:27017/budgetDB")
+const MONGO_URL = process.env.MONGO_URL || "";
+const PORT = process.env.PORT || 5000;
+
+const clientOptions = {
+    serverApi: {
+        version: "1" as "1",
+        strict: true,
+        deprecationErrors: true
+    }
+};
+
+mongoose.connect(MONGO_URL, clientOptions)
     .then(() => {
         console.log("Connected to MongoDB");
     })
-    .catch((err: Error) => {console.log("Connection error: ", err)
+    .catch((err: Error) =>
+        {console.log("Connection error: ", err)
     });
 
 interface ExpenseObject {
@@ -48,4 +63,4 @@ app.post("/api/expenses", async(req: Request, res: Response) => {
     }
 });
 
-app.listen(5000, ()=> {console.log("server started on port 5000")})
+app.listen(PORT, ()=> {console.log(`server started on port ${PORT}`)})
