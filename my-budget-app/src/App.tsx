@@ -8,7 +8,6 @@ import { HandleExpenseDescriptionChange, HandleExpenseAmountChange, categories, 
 
 function App() {
 
-  const [backendData, setBackendData] = useState([{}])
   //expenseDescription = item name entered by user
   const [expenseDescription, setExpenseDescription] = useState("")
   //expenseAmount = dollar amount entered by user
@@ -33,13 +32,14 @@ function App() {
   const [isOpenDialog, setIsOpenDialog] = useState(false)
 
   useEffect(()=>{
-    fetch("/api").then(
-      response => response.json()
-    ).then(
-      data => {
-        setBackendData(data)
-      }
-    )
+    //fetch user data (expenses) from backend when component mounts
+    fetch("/api/expenses")
+    .then(response => response.json())
+    .then(data => {
+      console.log("fetched data from the backend: ", data);
+      setExpenses(data);
+    })
+    .catch(error => console.error("error fetching from the backend: ", error))
   }, [])
 
   useEffect(()=>{
@@ -123,27 +123,53 @@ function App() {
       setExpenseDescriptionError("")
     };
 
-    if (!valid) return
+    if (!valid) return;
 
-    //edit expense if isEdit not null aka true
+    const newExpense = {
+      description: expenseDescription,
+      amount: expenseAmount,
+      category: selectedCategory
+    };
+
+    //edit expense if isEdit not null aka true update exisiting expense
     if (isEdit !== null) {
-      //if index equals isEdit then update that object
-      setExpenses(expenses.map((expense, index) =>
-        //condition is index must equal isEdit. This is how only the selected entry will be updated.
-        //map will go through each entry until it finds the index === isEdit
-        index === isEdit
-          ? { description: expenseDescription, amount: expenseAmount, category: selectedCategory }
-          : expense
-      ));
+      setExpenses((prevExpenses)=> {
+         //map will go through each entry until it finds the index === isEdit
+        return prevExpenses.map((expense, index) => {
+          //if index equals isEdit then update that object
+          if (index === isEdit) {
+            return { ...expense, ...newExpense }; //merge old info with new
+          } else {
+            return expense;
+          }
+        });
+      });
 
-      setIsEdit(null);
+      setIsEdit(null); //reset edit state
 
     } else {
-      //else add new expense
+      // else if isEdit null, add new expense
       setExpenses((prevExpenses) => [
         ...prevExpenses,
-        { description: expenseDescription, amount: expenseAmount, category: selectedCategory }
-      ])
+        { ...newExpense } //add new expense to array
+      ]);
+
+      // send new expense to backend
+
+      fetch("http://localhost:5000/api/expenses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newExpense)
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log("expense added: ", data)
+      })
+      .catch(error => {
+        console.error("expense adding error: ", error)
+      })
     };
 
     setExpenseAmount("");
@@ -152,7 +178,7 @@ function App() {
     setSelectedCategory("");
     setFormSubmitted(false);
     setIsOpenDialog(false);
-  }
+  };
 
   const handleEditExpense: HandleEditExpense = (index) => {
     //need the index to select the expense to edit
