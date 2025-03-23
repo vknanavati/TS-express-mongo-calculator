@@ -1,12 +1,15 @@
 import express from 'express';
-import { Request, Response} from 'express';
+import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Expense from './model/expenseSchema';
+import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
+
+app.use(cors())
 
 const MONGO_URL = process.env.MONGO_URL || "";
 const PORT = process.env.PORT || 5000;
@@ -34,6 +37,7 @@ app.get("/api", (req: Request, res: Response) => {
     res.json({ "status": ["API is working"] })
 })
 
+// POST route to add expenses
 app.post("/api/expenses", async(req: Request, res: Response) => {
     const { description, amount, category} = req.body;
 
@@ -43,6 +47,7 @@ app.post("/api/expenses", async(req: Request, res: Response) => {
     }
 
     const newExpense = new Expense({ description, amount, category });
+
     try {
         await newExpense.save();
         res.status(201).json({ message: "expense added" });
@@ -50,5 +55,17 @@ app.post("/api/expenses", async(req: Request, res: Response) => {
         res.status(500).json({ error: "failed to add expense" })
     }
 });
+
+app.get("/api/expenses", async(req: Request, res: Response) => {
+
+    try {
+        const expenses = await Expense.find(); //fetch expenses from DB
+        res.json(expenses); // send expenses as JSON
+    } catch (error) {
+        res.status(500).json({ error: "failed to fetch expenses" })
+    }
+});
+
+
 
 app.listen(PORT, ()=> {console.log(`server started on port ${PORT}`)})
