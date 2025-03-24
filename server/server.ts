@@ -66,6 +66,4 @@ app.get("/api/expenses", async(req: Request, res: Response) => {
     }
 });
 
-
-
 app.listen(PORT, ()=> {console.log(`server started on port ${PORT}`)})
